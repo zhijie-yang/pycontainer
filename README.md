@@ -1,5 +1,19 @@
 # A Simple Container with Python Interfaces
 
+## Dependencies
+
+```bash
+sudo apt install cmake python3-dev
+```
+
+## Build
+
+```bash
+mkdir build && cd build
+cmake ..
+make
+```
+
 ## C++ Backend
 
 Run with `sudo ./pycontainer`. The examplary `main` creates a new process with the rootfs of an `ubuntu-2204`, calls and handles the new process to `/bin/bash`.

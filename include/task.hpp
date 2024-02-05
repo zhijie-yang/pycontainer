@@ -28,10 +28,10 @@ public:
     const Status& getStatus();
     const std::vector<std::string>& getFlags();
 
-    const ResponseStatus& start();
+    bool start();
     const ResponseStatus& stop();
 
-    static inline void* getFreeStack();
+    static inline void* getFreeStack(unsigned long stack_size);
     template <typename... T>
     static int runCommand(T... params) {
         char *args[] = {(char *)params..., (char*) 0};
@@ -45,10 +45,10 @@ public:
     static void changeRoot(char* folder);
     static void mountFs(MappedPaths const& mapped_paths);
     template <typename Function>
-    static void cloneProcess(Function&& func, int flags) {
-        void* stack_addr = getFreeStack();
+    static void cloneProcess(Function&& func, void* stack_addr, int flags) {
         pid_t child_pid = clone(func, stack_addr, flags, 0);
         wait(nullptr);
     }
     static int taskRunner(void* args);
+    static inline unsigned long getStackSize();
 };
