@@ -4,10 +4,17 @@
 #include <iostream>
 #include <sched.h>
 #include <signal.h>
+#include <string>
+#include <cstring>
 #include "task.hpp"
 
+
+int Task::runCommand(char** args) {
+    return execvp(args[0], args);
+}
+
 int Task::entrySubprocess(void* args) {
-    runCommand("/bin/bash", "-c", "echo Hallo!");
+    runCommand((char**) args);
 }
 
 int Task::taskRunner(void* args) {
@@ -20,7 +27,7 @@ int Task::taskRunner(void* args) {
     mount("proc", "/proc", "proc", 0, 0);
     unsigned long stack_size = getStackSize();
     void* stack_addr = getFreeStack(stack_size);
-    cloneProcess(entrySubprocess, stack_addr, SIGCHLD);
+    cloneProcess(entrySubprocess, stack_addr, SIGCHLD, args);
     free(stack_addr - stack_size);
     umount("/proc");
     return EXIT_SUCCESS;
@@ -34,7 +41,6 @@ const MappedPaths& Task::getMappedPaths(void) {
     return this->m_mapped_paths;
 }
 
-
 const Status& Task::getStatus(void) {
     return this->m_status;
 }
@@ -43,10 +49,15 @@ const std::vector<std::string>& Task::getFlags(void) {
     return this->m_flags;
 }
 
-bool Task::start(void) {
+bool Task::start(std::vector<std::string> args) {
+    const char* args_[args.size()+1];
+    for (size_t i = 0; i < args.size(); i++) {
+        args_[i] = args[i].c_str();
+    }
+    args_[args.size()] = (char*) 0;
     unsigned long stack_size = getStackSize();
     void* stack_addr = getFreeStack(stack_size);
-    cloneProcess(taskRunner, stack_addr, CLONE_NEWUTS | CLONE_NEWPID | SIGCHLD);
+    cloneProcess(taskRunner, stack_addr, CLONE_NEWUTS | CLONE_NEWPID | SIGCHLD, args_);
     free(stack_addr - stack_size);
     return true;
 }

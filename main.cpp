@@ -9,6 +9,10 @@ int main(int argc, void* argv[]) {
     mp.push_back(p);
     Task task("wow", mp);
 
-    task.start();
+    std::string c = "/bin/bash";
+    std::string d = "-c";
+    std::string e = "echo Hallo!";
+    std::vector<std::string> cmd = {c, d, e};
+    task.start(cmd);
     return EXIT_SUCCESS;
 }
