@@ -53,11 +53,12 @@ bool Task::start(std::vector<std::string> args) {
     const char* args_[args.size()+1];
     for (size_t i = 0; i < args.size(); i++) {
         args_[i] = args[i].c_str();
+        // std::cout << "args[" << i << "]: " << args[i] << std::endl;
     }
     args_[args.size()] = (char*) 0;
     unsigned long stack_size = getStackSize();
     void* stack_addr = getFreeStack(stack_size);
-    cloneProcess(taskRunner, stack_addr, CLONE_NEWUTS | CLONE_NEWPID | SIGCHLD, args_);
+    cloneProcess(taskRunner, stack_addr, CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWNS | CLONE_NEWNET | SIGCHLD, args_);
     free(stack_addr - stack_size);
     return true;
 }
