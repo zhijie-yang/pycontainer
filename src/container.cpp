@@ -6,18 +6,18 @@
 #include <signal.h>
 #include <string>
 #include <cstring>
-#include "task.hpp"
+#include "container.hpp"
 
 
-int Task::runCommand(char** args) {
+int Container::runCommand(char** args) {
     return execvp(args[0], args);
 }
 
-int Task::entrySubprocess(void* args) {
+int Container::entrySubprocess(void* args) {
     runCommand((char**) args);
 }
 
-int Task::taskRunner(void* args) {
+int Container::taskRunner(void* args) {
     clearenv();
     std::string hostname = "ubuntu-2204-container";
     sethostname(hostname.c_str(), hostname.size());
@@ -29,27 +29,28 @@ int Task::taskRunner(void* args) {
     void* stack_addr = getFreeStack(stack_size);
     cloneProcess(entrySubprocess, stack_addr, SIGCHLD, args);
     free(stack_addr - stack_size);
+    std::cout << "unmounting proc" << std::endl;
     umount("/proc");
     return EXIT_SUCCESS;
 }
 
-const std::string& Task::getName(void) {
-    return this->m_name;
+const std::string& Container::getID(void) {
+    return this->ID_;
 }
 
-const MappedPaths& Task::getMappedPaths(void) {
-    return this->m_mapped_paths;
+const MappedPaths& Container::getMappedPaths(void) {
+    return this->mapped_paths_;
 }
 
-const Status& Task::getStatus(void) {
-    return this->m_status;
+const ContainerStatus& Container::getStatus(void) {
+    return this->status_;
 }
 
-const std::vector<std::string>& Task::getFlags(void) {
-    return this->m_flags;
+const std::vector<std::string>& Container::getFlags(void) {
+    return this->flags_;
 }
 
-bool Task::start(std::vector<std::string> args) {
+bool Container::start(std::vector<std::string> args) {
     const char* args_[args.size()+1];
     for (size_t i = 0; i < args.size(); i++) {
         args_[i] = args[i].c_str();
@@ -63,7 +64,7 @@ bool Task::start(std::vector<std::string> args) {
     return true;
 }
 
-void* Task::getFreeStack(unsigned long stack_size) {
+void* Container::getFreeStack(unsigned long stack_size) {
     void* stack = malloc(stack_size);
     if (!stack) {
         std::cout << "Cannot allocation a stack of " << stack_size << " bytes." << std::endl;
@@ -73,12 +74,12 @@ void* Task::getFreeStack(unsigned long stack_size) {
     return stack + stack_size;
 }
 
-void Task::changeRoot(char* folder) {
+void Container::changeRoot(char* folder) {
     chroot(folder);
     chdir("/");
 }
 
-unsigned long Task::getStackSize() {
+unsigned long Container::getStackSize() {
     struct rlimit stack_lim;
     getrlimit(RLIMIT_STACK, &stack_lim);
     return stack_lim.rlim_cur;

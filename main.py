@@ -28,8 +28,8 @@ def main(argv: list[str] = sys.argv):
     else:
         mapped_paths = []
 
-    task = pycontainer.Task(args.name, mapped_paths)
-    task.start(args.command)
+    container = pycontainer.Container(args.name, mapped_paths)
+    container.start(args.command)
 
 if __name__ == '__main__':
     main()

@@ -2,30 +2,34 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <ctime>
 #include <iostream>
 #include <atomic>
 #include <sys/wait.h>
-#include "status.hpp"
+#include "container_status.hpp"
 #include "resp_status.hpp"
 
 typedef std::vector<std::pair<std::string, std::string>> MappedPaths;
 
-class Task {
+class Container {
 private:
-    std::string m_name;
-    MappedPaths m_mapped_paths;
-    std::atomic<Status> m_status;
-    std::vector<std::string> m_flags;
+    std::string ID_;
+    pid_t initi_process_pid_;
+    uint64_t init_process_start_time_;
+    std::time_t created_;
+    MappedPaths mapped_paths_;
+    std::atomic<ContainerStatus> status_;
+    std::vector<std::string> flags_;
 
 public:
-    Task(std::string name, MappedPaths mapped_paths)
-        : m_name{name}
-        , m_mapped_paths{mapped_paths}
+    Container(std::string ID, MappedPaths mapped_paths)
+        : ID_{ID}
+        , mapped_paths_{mapped_paths}
     {}
 
-    const std::string& getName();
+    const std::string& getID();
     const MappedPaths& getMappedPaths();
-    const Status& getStatus();
+    const ContainerStatus& getStatus();
     const std::vector<std::string>& getFlags();
 
     bool start(std::vector<std::string> args);
