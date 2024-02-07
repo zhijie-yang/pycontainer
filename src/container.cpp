@@ -2,6 +2,7 @@
 #include <sys/wait.h>
 #include <sys/mount.h>
 #include <iostream>
+#include <filesystem>
 #include <sched.h>
 #include <signal.h>
 #include <string>
@@ -24,7 +25,7 @@ int Container::taskRunner(void* args) {
     setenv("TERM", "xterm-256color", 0);
     setenv("PATH", "/bin/:/sbin/:usr/bin:/usr/sbin", 0);
     changeRoot("./ubuntu-base-22.04-base-arm64");
-    mount("proc", "/proc", "proc", 0, 0);
+    mount("proc", "/proc", "proc", 0, NULL);
     unsigned long stack_size = getStackSize();
     void* stack_addr = getFreeStack(stack_size);
     cloneProcess(entrySubprocess, stack_addr, SIGCHLD, args);
@@ -59,7 +60,7 @@ bool Container::start(std::vector<std::string> args) {
     args_[args.size()] = (char*) 0;
     unsigned long stack_size = getStackSize();
     void* stack_addr = getFreeStack(stack_size);
-    cloneProcess(taskRunner, stack_addr, CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWNS | CLONE_NEWNET | SIGCHLD, args_);
+    cloneProcess(taskRunner, stack_addr, CLONE_NEWUTS | CLONE_NEWCGROUP | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWNS | CLONE_NEWNET | CLONE_NEWUSER | SIGCHLD, args_);
     free(stack_addr - stack_size);
     return true;
 }
