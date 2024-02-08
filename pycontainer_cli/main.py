@@ -1,7 +1,7 @@
 import argparse
 import sys
 import os
-import build.pycontainer as pycontainer
+import pycontainer
 
 
 def parse_args(argv: list[str]):
@@ -12,7 +12,7 @@ def parse_args(argv: list[str]):
                         help='Name of the container')
     parser.add_argument('-r', '--rootfs', required=True, type=str,
                         help='Path to container image rootfs')
-    parser.add_argument('command', nargs=argparse.REMAINDER,
+    parser.add_argument('command', nargs=argparse.REMAINDER, 
                         help='The command to run')
     return parser.parse_args()
 
@@ -30,6 +30,7 @@ def main(argv: list[str] = sys.argv):
     else:
         mapped_paths = []
 
+    print(args.name)
     container = pycontainer.Container(args.name, args.rootfs, mapped_paths)
     container.start(args.command)
 

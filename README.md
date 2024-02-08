@@ -9,9 +9,7 @@ sudo apt install cmake python3-dev
 ## Build
 
 ```bash
-mkdir build && cd build
-cmake ..
-make
+pip3 install .
 ```
 
 ## Usage
@@ -24,6 +22,11 @@ Download an Ubuntu 22.04 root hierarchy (or any arbitrary image rootfs) and unzi
 \# python3 main.py --name someName --root /path/to/unzipped/rootfs \<command\> [<args>...]
 # For example, this command will spawn a containerised bash and traps the current terminal into it
 sudo python3 main.py --name containerised_bash --root ./ubuntu-base-22.04-base-arm64 /bin/bash
+```
+
+If installed with `pip`, this program can also be run with
+```bash
+sudo pycontainer --name someName --root ...
 ```
 
 ## C++ Backend
