@@ -19,16 +19,21 @@ int Container::entrySubprocess(void* args) {
 }
 
 int Container::taskRunner(void* args) {
+    // if (mount("", "/", "", MS_PRIVATE | MS_REC, NULL) == -1) {
+    //     perror("Error remounting / as private mount: ");
+    // }
     clearenv();
     std::string hostname = "ubuntu-2204-container";
     sethostname(hostname.c_str(), hostname.size());
     setenv("TERM", "xterm-256color", 0);
     setenv("PATH", "/bin/:/sbin/:usr/bin:/usr/sbin", 0);
-    changeRoot("./ubuntu-base-22.04-base-arm64");
-    mount("proc", "/proc", "proc", 0, NULL);
+    changeRoot(((char**) args)[0]);
+    if (mount("proc", "/proc", "proc", MS_NOEXEC | MS_NODEV | MS_NOSUID, NULL) == -1) {
+        perror("Error mounting /proc");
+    }
     unsigned long stack_size = getStackSize();
     void* stack_addr = getFreeStack(stack_size);
-    cloneProcess(entrySubprocess, stack_addr, SIGCHLD, args);
+    cloneProcess(entrySubprocess, stack_addr, SIGCHLD, &(((char**) args)[1]));
     free(stack_addr - stack_size);
     std::cout << "unmounting proc" << std::endl;
     umount("/proc");
@@ -52,15 +57,16 @@ const std::vector<std::string>& Container::getFlags(void) {
 }
 
 bool Container::start(std::vector<std::string> args) {
-    const char* args_[args.size()+1];
+    const char* args_[args.size()+2];
+    args_[0] = this->root_path.c_str();
     for (size_t i = 0; i < args.size(); i++) {
-        args_[i] = args[i].c_str();
+        args_[i+1] = args[i].c_str();
         // std::cout << "args[" << i << "]: " << args[i] << std::endl;
     }
-    args_[args.size()] = (char*) 0;
+    args_[args.size()+1] = (char*) 0;
     unsigned long stack_size = getStackSize();
     void* stack_addr = getFreeStack(stack_size);
-    cloneProcess(taskRunner, stack_addr, CLONE_NEWUTS | CLONE_NEWCGROUP | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWNS | CLONE_NEWNET | CLONE_NEWUSER | SIGCHLD, args_);
+    cloneProcess(taskRunner, stack_addr, CLONE_NEWUTS | CLONE_NEWCGROUP | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWNS | CLONE_NEWNET | SIGCHLD, args_);
     free(stack_addr - stack_size);
     return true;
 }
@@ -76,8 +82,14 @@ void* Container::getFreeStack(unsigned long stack_size) {
 }
 
 void Container::changeRoot(char* folder) {
-    chroot(folder);
-    chdir("/");
+    if (chroot(folder) == -1) {
+        perror("Error chroot");
+        exit(EXIT_FAILURE);
+    }
+    if (chdir("/") == -1) {
+        perror("Error chdir");
+        exit(EXIT_FAILURE);
+    }
 }
 
 unsigned long Container::getStackSize() {

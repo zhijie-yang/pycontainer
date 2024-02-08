@@ -14,6 +14,7 @@ typedef std::vector<std::pair<std::string, std::string>> MappedPaths;
 class Container {
 private:
     std::string ID_;
+    std::string root_path;
     pid_t initi_process_pid_;
     uint64_t init_process_start_time_;
     std::time_t created_;
@@ -22,8 +23,9 @@ private:
     std::vector<std::string> flags_;
 
 public:
-    Container(std::string ID, MappedPaths mapped_paths)
+    Container(std::string ID, std::string root_path, MappedPaths mapped_paths)
         : ID_{ID}
+        , root_path {root_path}
         , mapped_paths_{mapped_paths}
     {}
 
@@ -44,6 +46,9 @@ public:
     template <typename Function>
     static void cloneProcess(Function&& func, void* stack_addr, int flags, void* args) {
         pid_t child_pid = clone(func, stack_addr, flags, args);
+        if (child_pid == -1) {
+            perror("Error clone child process");
+        }
         wait(nullptr);
     }
     static int taskRunner(void* args);
