@@ -15,18 +15,21 @@ make
 ```
 
 ## Usage
-Download an Ubuntu 22.04 root hierarchy and unzip it in the `build` directory.
+Download an Ubuntu 22.04 root hierarchy (or any arbitrary image rootfs) and unzip it.
 [amd64](https://cdimage.ubuntu.com/ubuntu-base/releases/22.04/release/ubuntu-base-22.04-base-amd64.tar.gz),
 [arm64](https://cdimage.ubuntu.com/ubuntu-base/releases/22.04/release/ubuntu-base-22.04-base-arm64.tar.gz)
 
 ```bash
-# In project source directory
-python3 main.py --name SomeName /bin/bash -c 'echo Hallo!'
+# In project source directory, run with sudo privilege
+\# python3 main.py --name someName --root /path/to/unzipped/rootfs \<command\> [<args>...]
+# For example, this command will spawn a containerised bash and traps the current terminal into it
+sudo python3 main.py --name containerised_bash --root ./ubuntu-base-22.04-base-arm64 /bin/bash
 ```
 
 ## C++ Backend
 
-Run with `sudo ./simple_container`. The examplary `main` creates a new process with the rootfs of an `ubuntu-2204`, calls and handles the new process to `/bin/bash`.
+Provides APIs for the lower level abstraction required to spawn containerised processes. Command line interface
+is implemented with `main.py`. Can be used either as a C++ library or a Python module.
 
 ## TODO
 
@@ -42,3 +45,4 @@ Run with `sudo ./simple_container`. The examplary `main` creates a new process w
 
 * [Contains from Scratch](https://github.com/lizrice/containers-from-scratch)
 * [Creating Your Own Containers](https://cesarvr.github.io/post/2018-05-22-create-containers/)
+* [tinydocker](https://github.com/HobbyBear/tinydocker/)

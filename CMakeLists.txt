@@ -3,11 +3,11 @@ project(pycontainer VERSION 0.0.1)
 
 add_executable(simple_container main.cpp src/container.cpp)
 target_include_directories(simple_container PUBLIC ${CMAKE_SOURCE_DIR}/include)
-set_property(TARGET simple_container PROPERTY CXX_STANDARD 11)
+set_property(TARGET simple_container PROPERTY CXX_STANDARD 17)
 
 add_library(container_impl SHARED src/container.cpp)
 target_include_directories(container_impl PUBLIC ${CMAKE_SOURCE_DIR}/include)
-set_property(TARGET container_impl PROPERTY CXX_STANDARD 11)
+set_property(TARGET container_impl PROPERTY CXX_STANDARD 17)
 
 add_subdirectory(extern/pybind11)
 find_package(PythonLibs REQUIRED)

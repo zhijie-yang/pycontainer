@@ -2,11 +2,11 @@
 #include <sys/wait.h>
 #include <sys/mount.h>
 #include <iostream>
-#include <filesystem>
 #include <sched.h>
 #include <signal.h>
 #include <string>
 #include <cstring>
+#include <sys/syscall.h>
 #include "container.hpp"
 
 
@@ -19,9 +19,9 @@ int Container::entrySubprocess(void* args) {
 }
 
 int Container::taskRunner(void* args) {
-    // if (mount("", "/", "", MS_PRIVATE | MS_REC, NULL) == -1) {
-    //     perror("Error remounting / as private mount: ");
-    // }
+    if (mount("", "/", "", MS_PRIVATE | MS_REC, NULL) == -1) {
+        perror("Error remounting / as private mount: ");
+    }
     clearenv();
     std::string hostname = "ubuntu-2204-container";
     sethostname(hostname.c_str(), hostname.size());
@@ -35,8 +35,11 @@ int Container::taskRunner(void* args) {
     void* stack_addr = getFreeStack(stack_size);
     cloneProcess(entrySubprocess, stack_addr, SIGCHLD, &(((char**) args)[1]));
     free(stack_addr - stack_size);
-    std::cout << "unmounting proc" << std::endl;
-    umount("/proc");
+    // No need to manually unmount, as the mount namespace is wiped after this
+    // process exits
+    // if (umount("/proc") == -1) {
+        // perror("Error umounting /proc");
+    // }
     return EXIT_SUCCESS;
 }
 
@@ -81,9 +84,32 @@ void* Container::getFreeStack(unsigned long stack_size) {
     return stack + stack_size;
 }
 
-void Container::changeRoot(char* folder) {
-    if (chroot(folder) == -1) {
-        perror("Error chroot");
+void Container::changeRoot(char* path, bool use_chroot) {
+    if (use_chroot) {
+        if (chroot(path) == -1) {
+            perror("Error chroot");
+            exit(EXIT_FAILURE);
+        }
+        return;
+    }
+    // !use_chroot
+    namespace fs = std::filesystem;
+    fs::path root_path(path);
+    if (!fs::exists(root_path)) {
+        perror("Rootfs does not exist!!");
+        exit(EXIT_FAILURE);
+    }
+    if (mount(path, path, "bind", MS_BIND | MS_REC, NULL) == -1) {
+        perror("Error mounting rootfs");
+    }
+    fs::path backup_path = root_path / fs::path(".old");
+    if (!fs::exists(backup_path) && !fs::create_directories(backup_path)) {
+        perror("Error creating backup folder for root pivoting");
+        exit(EXIT_FAILURE);
+    }
+    fs::permissions(backup_path, fs::perms::owner_all);
+    if (syscall(SYS_pivot_root, root_path.c_str(), backup_path.c_str()) == -1) {
+        perror("Error pivoting root");
         exit(EXIT_FAILURE);
     }
     if (chdir("/") == -1) {

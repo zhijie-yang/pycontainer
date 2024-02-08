@@ -6,6 +6,7 @@
 #include <iostream>
 #include <atomic>
 #include <sys/wait.h>
+#include <filesystem>
 #include "container_status.hpp"
 #include "resp_status.hpp"
 
@@ -37,11 +38,12 @@ public:
     bool start(std::vector<std::string> args);
     const ResponseStatus& stop();
 
+private:
     static inline void* getFreeStack(unsigned long stack_size);
     static int runCommand(char** args);
 
     static int entrySubprocess(void* args);
-    static void changeRoot(char* folder);
+    static void changeRoot(char* path, bool use_chroot=false);
     static void mountFs(MappedPaths const& mapped_paths);
     template <typename Function>
     static void cloneProcess(Function&& func, void* stack_addr, int flags, void* args) {
